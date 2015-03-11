@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "directorio.h"
-#include "cola.h"
+
 // Estructura que almacena los parámetros de entrada
 typedef struct{
 	int numProcesos;
@@ -15,20 +15,41 @@ typedef struct{
 }argumentos;
 
 
-int opcion;
-int boolDirectorio = 0;
-int boolProcesos = 0;
-int cantidadParametros = 0;
-int boolAyuda = 0;
-argumentos args;
-int llamada;
 
 
+void resolver(int concurrencia,char* salida,char* directorio){
+	int procesos_libres, procesos_ocupados, i;
+	TIPO_COLA* cola_directorios = crear_cola();
+	ManejoDirectorios(cola_directorios,directorio);
 
+	pid_t *trabajadores = (pid_t *) malloc(concurrencia * sizeof(pid_t));
+	for (i = 0; i < concurrencia; ++i) {
+    	trabajadores[i] = fork();
+      	if (trabajadores[i] < 0) {
+        	perror("ERROR EN LA CREACIÓN DE PROCESOS");
+        	exit(1);
+      	}
+      	if(trabajadores[i] == 0){
+      		printf("ENTRE\n");
+      		exit(0);
+      		// QUE DEBEN HACER
+      	}
 
+     }
+	procesos_libres = concurrencia;
+	procesos_ocupados = 0;
+
+}
 
 int main(int argc, char *argv[]){
 
+	int opcion;
+	int boolDirectorio = 0;
+	int boolProcesos = 0;
+	int cantidadParametros = 0;
+	int boolAyuda = 0;
+	argumentos args;
+	int llamada;
 
 	llamada = strcmp(argv[0],"./UsoDisco");
 
@@ -160,7 +181,7 @@ int main(int argc, char *argv[]){
 
     // Caso en el que el usuario introdujo el nivel de concurrencia, mas no un directorio
      if ((!boolDirectorio) & (boolProcesos)){
-     	args.directorio = (char*)malloc(sizeof(100));
+     	args.directorio = (char*)malloc(sizeof(1000));
     	args.directorio = getcwd(NULL,0);
      	args.salida = (char*)malloc(sizeof(argv[3]));
     	strcpy(args.salida,argv[3]);
@@ -176,7 +197,15 @@ int main(int argc, char *argv[]){
 
     // Caso en el que usuario no introdujo un nivel de concurrencia ni un directorio
     if ((!boolDirectorio) & (!boolProcesos)){
+    	args.numProcesos = 1;
+    	args.directorio = (char*)malloc(sizeof(1000));
+    	args.directorio = getcwd(NULL,0);
      	args.salida = (char*)malloc(sizeof(argv[1]));
     	strcpy(args.salida,argv[1]);
     }
+
+    resolver(args.numProcesos,args.salida,args.directorio);
+
 }
+
+

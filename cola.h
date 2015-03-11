@@ -12,6 +12,7 @@ typedef struct caja {
   struct caja *sig;
 } TIPO_CAJA;
 
+
 typedef struct cola {
     int tam;
     TIPO_CAJA *primero;
