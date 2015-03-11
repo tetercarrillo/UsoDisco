@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "directorio.h"
+#include "cola.h"
 // Estructura que almacena los parámetros de entrada
 typedef struct{
 	int numProcesos;
