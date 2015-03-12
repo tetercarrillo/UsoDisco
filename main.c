@@ -52,6 +52,8 @@ int estado_disponible (int* arreglo_estados, int num_procesos){
 	return 0;
 }
 
+
+// Indica la primera posicion donde hay un proceso diponible
 int proceso_disponible(int* arreglo_estados, int num_procesos){
 	int i,disponible;
 	for (i = 0; i < num_procesos; ++i){
@@ -63,6 +65,7 @@ int proceso_disponible(int* arreglo_estados, int num_procesos){
 	return -1;
 
 }
+
 
 void resolver(int concurrencia,char* salida,char* directorio){
 	int i;
@@ -87,6 +90,7 @@ void resolver(int concurrencia,char* salida,char* directorio){
       		break;
       	}
 
+
     }
 
     // Estructuras necesarias para el manejo de pipes
@@ -110,7 +114,9 @@ void resolver(int concurrencia,char* salida,char* directorio){
 
 }
 
+
 // Indica la primera posicion donde hay un proceso diponible
+
 
 
 
