@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "directorio.h"
+#include "cola.h"
 
 // Estructura que almacena los parámetros de entrada
 typedef struct{
@@ -27,6 +28,41 @@ void manejoProcesos(int* id_procesos, int* status_procesos,int posicion){
 	}
 }
 
+// Revisa si hay algun proceso ocupado
+int estado_ocupado (int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Caso en el que hay alguien ocupado
+		if (arreglo_estados[i] == 1){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+// Revisa si hay algun proceso disponible
+int estado_disponible (int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Caso en el que hay alguien disponible
+		if (arreglo_estados[i] == 0){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int proceso_disponible(int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Hay alguien desocupado
+		if (arreglo_estados[i] == 0){
+			return i;
+		}
+	}
+	return -1;
+
+}
 
 void resolver(int concurrencia,char* salida,char* directorio){
 	int i;
@@ -70,50 +106,12 @@ void resolver(int concurrencia,char* salida,char* directorio){
     	if(disponible){
     		posicion = proceso_disponible(estado_trabajadores,concurrencia);
     	}
-
-
-
     }
-
 
 }
 
 // Indica la primera posicion donde hay un proceso diponible
-int proceso_disponible(int* arreglo_estados, int num_procesos){
-	int i,disponible;
-	for (i = 0; i < num_procesos; ++i){
-		// Hay alguien desocupado
-		if (arreglo_estados[i] == 0){
-			return i;
-		}
-	}
-	return -1;
 
-}
-
-// Revisa si hay algun proceso ocupado
-int estado_ocupado (int* arreglo_estados, int num_procesos){
-	int i,disponible;
-	for (i = 0; i < num_procesos; ++i){
-		// Caso en el que hay alguien ocupado
-		if (arreglo_estados[i] == 1){
-			return 1;
-		}
-	}
-	return 0;
-}
-
-// Revisa si hay algun proceso disponible
-int estado_disponible (int* arreglo_estados, int num_procesos){
-	int i,disponible;
-	for (i = 0; i < num_procesos; ++i){
-		// Caso en el que hay alguien disponible
-		if (arreglo_estados[i] == 0){
-			return 1;
-		}
-	}
-	return 0;
-}
 
 
 int main(int argc, char *argv[]){
@@ -280,7 +278,6 @@ int main(int argc, char *argv[]){
     }
 
     resolver(args.numProcesos,args.salida,args.directorio);
-
 }
 
 
