@@ -17,30 +17,9 @@
 #include <dirent.h>
 #include <time.h>
 #include <fcntl.h>
-
-typedef struct caja {
-  char* nombre_directorio;
-  struct caja *sig;
-} TIPO_CAJA;
+#include "cola.h"
 
 
-typedef struct cola {
-    int tam;
-    TIPO_CAJA *primero;
-    TIPO_CAJA *ultimo;
-}  TIPO_COLA;
-
-TIPO_COLA* crear_cola();
-
-void encolar (char* elemento, TIPO_COLA *c);
-
-int cola_vacia(TIPO_COLA *c);
-
-char* desencolar (TIPO_COLA *c);
-
-void destruir_cola (TIPO_COLA *c);
-
-void imprimir_cola(TIPO_COLA *c);
 
 void ManejoDirectorios(TIPO_COLA* c, char* raiz);
 

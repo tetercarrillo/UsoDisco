@@ -52,6 +52,20 @@ int estado_disponible (int* arreglo_estados, int num_procesos){
 	return 0;
 }
 
+// Indica la primera posicion donde hay un proceso diponible
+int proceso_disponible(int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Hay alguien desocupado
+		if (arreglo_estados[i] == 0){
+			return i;
+		}
+	}
+	return -1;
+
+}
+
+
 
 void resolver(int concurrencia,char* salida,char* directorio){
 	int i;
@@ -74,6 +88,7 @@ void resolver(int concurrencia,char* salida,char* directorio){
       		trabajadores_id[i] = getpid();
       		manejoProcesos(trabajadores_id,estado_trabajadores,i);
       		break;
+      	}
       	
 
     }
@@ -103,19 +118,6 @@ void resolver(int concurrencia,char* salida,char* directorio){
 
 }
 
-// Indica la primera posicion donde hay un proceso diponible
-int proceso_disponible(int* arreglo_estados, int num_procesos){
-	int i,disponible;
-	for (i = 0; i < num_procesos; ++i){
-		// Hay alguien desocupado
-		if (arreglo_estados[i] == 0){
-			return i;
-		}
-	}
-	return -1;
-}
-
-}
 
 
 int main(int argc, char *argv[]){
