@@ -11,4 +11,3 @@ directorio.o: directorio.c directorio.h
 
 clean:
 	rm -f *.o *.gch main || true
-	rm UsoDisco || true

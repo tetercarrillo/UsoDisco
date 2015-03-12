@@ -57,7 +57,63 @@ void resolver(int concurrencia,char* salida,char* directorio){
     pipe_struct* pipes_trabajadores = (pipe_struct*) malloc(concurrencia*sizeof(pipe_struct));
     pipe_struct* pipe_maestro = (pipe_struct*) malloc(sizeof(pipe_struct));
 
+    // Se encolan los directorios de la carpeta raiz pasada por terminal o por default se toma la actual
+    TIPO_COLA* cola_directorios = crear_cola();
+    ManejoDirectorios(cola_directorios,directorio);
+    int ocupado = estado_ocupado(estado_trabajadores,concurrencia);
+    int disponible, posicion;
+    char* ruta_auxiliar;
+    while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
 
+    	ruta_auxiliar = desencolar(cola_directorios);
+    	disponible = (estado_trabajadores,concurrencia);
+    	if(disponible){
+    		posicion =proceso_disponible(estado_trabajadores,concurrencia);
+    	}
+
+
+
+    }
+
+
+}
+
+// Indica la primera posicion donde hay un proceso diponible
+int proceso_disponible(int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Hay alguien desocupado
+		if (arreglo_estados[i] == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+}
+
+// Revisa si hay algun proceso ocupado
+int estado_ocupado (int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Caso en el que hay alguien ocupado
+		if (arreglo_estados[i] == 1){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+// Revisa si hay algun proceso disponible
+int estado_disponible (int* arreglo_estados, int num_procesos){
+	int i,disponible;
+	for (i = 0; i < num_procesos; ++i){
+		// Caso en el que hay alguien disponible
+		if (arreglo_estados[i] == 0){
+			return 1;
+		}
+	}
+	return 0;
 }
 
 
