@@ -26,6 +26,7 @@ char* ManejoDirectorios(char* raiz){
     DIR* dir;
     // Variable para leer el directorio
     struct dirent* dp;
+<<<<<<< HEAD
 
     int tamano_raiz, tamano_archivo,tamano_total, tamano_informacion,tamano_bloques,nro_enlaces;
     char* respuesta = (char*) malloc(sizeof(char)*5000);//!nuevo
@@ -34,6 +35,17 @@ char* ManejoDirectorios(char* raiz){
     char* informacion_directorio;
 
 
+=======
+    int tamano_raiz, tamano_archivo, tamano_total, numProc;
+    char* nombre_archivo;
+    char* cadena = malloc(100); //!nuevo
+    char* ruta;     //!nuevo
+    char* respuesta;//!nuevo
+
+    tamano_raiz = strlen(raiz);
+    struct stat statbuf;
+    int tam;
+>>>>>>> b0f0bf814cfd70edcd2424f7c631a4b23be96875
 
     // Se abre el directorio y se hace la verificación pertinente
     nro_enlaces = 0;
@@ -45,10 +57,17 @@ char* ManejoDirectorios(char* raiz){
 
     // Lectura del directorio raiz pasado como parámetro
     while ((dp = readdir(dir)) != NULL){
+
+        
         //Verificaciones pertinentes
         if ((strcmp(dp->d_name,".") != 0) && (strcmp(dp->d_name,"..") != 0)){
+<<<<<<< HEAD
             // Se calcula el tamano del string de la ruta
             char* cadena = (char*) malloc(sizeof(char)*150);
+=======
+            tam = 0;
+            unsigned char tipo;
+>>>>>>> b0f0bf814cfd70edcd2424f7c631a4b23be96875
             tamano_archivo = strlen(dp->d_name);
             tamano_total = tamano_raiz+tamano_archivo;
             // Se reserva espacio para alojar en ruta el string de la ruta de cada archivo
@@ -75,6 +94,7 @@ char* ManejoDirectorios(char* raiz){
             // Caso ARCHIVO REGULAR
             else if (tipo == DT_REG){
                 /* Creamos la concatenacion para mostrar: numero de procesador, ruta y $ */
+<<<<<<< HEAD
                 nro_enlaces = statbuf.st_nlink;
                 sprintf(cadena,"/2 %d %s\n",tamano_bloques,ruta);
                 strcat(respuesta,cadena);
@@ -84,10 +104,20 @@ char* ManejoDirectorios(char* raiz){
             // Caso ENLACE LÓGICO
             else if (tipo == DT_LNK){
                 nro_enlaces = nro_enlaces + 1;
+=======
+                tam = statbuf.st_blocks;
+                sprintf(cadena, "%d", tam); 
+                strcat(respuesta,cadena);
+                sprintf(cadena, " %s", ruta ); 
+                strcat(respuesta,cadena);
+                sprintf(cadena, "$");
+                strcat(respuesta,cadena);
+>>>>>>> b0f0bf814cfd70edcd2424f7c631a4b23be96875
             }
         }
 
     }
+<<<<<<< HEAD
     char* cadena = (char*) malloc(sizeof(char)*150);
     sprintf(cadena,"/3 %d",nro_enlaces);
     strcat(respuesta,cadena);
@@ -98,6 +128,8 @@ char* ManejoDirectorios(char* raiz){
 
     // Se devuelve el string con toda la información pertinente al directorio
     return informacion_directorio;
+=======
+>>>>>>> b0f0bf814cfd70edcd2424f7c631a4b23be96875
 
 }
 
