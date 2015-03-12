@@ -76,6 +76,114 @@ void manejoSalida(char* informacion, char* archivo_salida){
 
 }
 
+void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estado_procesos)
+{
+	int lqs = 0, i=0;
+	char* aux;
+	int tamanio = 27;
+	char cero	= '0';
+	char uno	= '1';
+	char dos	= '2';
+	char tres	= '3';
+	char cuatro	= '4';
+	char slash	= '/';
+	char nulo	= '\0';
+	char salto	= '\n';
+	char* tmp1,tmp2,tmp,tmp4;
+
+	while (arreglo[i] != nulo) {
+		
+		if (arreglo[i] == slash)
+		{
+			i = i+1;
+			if (arreglo[i] == uno)
+			{ /* directorio */
+				char* tmp1 = (char*) malloc(sizeof(char)*100);
+				int j = 0;
+				i = i+2;
+
+				memset(tmp1,0,100);
+				printf("entre a al primer caso\n");
+
+				while (arreglo[i] != salto)
+				{
+					tmp1[j] = arreglo[i];
+					i++;
+					j++;
+				}
+
+				encolar(tmp1, c);
+				printf("%s\n",tmp1);
+				free(tmp1);
+			}
+
+			else if (arreglo[i] == dos)
+			{ /* regular */
+				char* tmp2 = (char*) malloc(sizeof(char)*100);
+				int j = 0;
+				i=i+2;
+
+				memset(tmp2,0,100);
+
+				while (arreglo[i] != salto)
+				{
+					tmp2[j] = arreglo[i];
+					i++;
+					j++;
+				}
+				manejoSalida(tmp2, salida);
+				printf("%s\n",tmp2);
+				free(tmp2);
+			}
+
+			else if (arreglo[i] == tres) 
+			{	/* enlaces logicos */
+				char* tmp3 = (char*) malloc(sizeof(char)*100);
+				int j = 0;
+				i=i+2;
+
+				memset(tmp3,0,100);
+
+				while (arreglo[i] != salto)
+				{	
+					tmp3[j] = arreglo[i];
+					i++;
+					j++;
+				}
+				lqs = atoi(tmp3);
+				enlaces = enlaces + lqs; /*lqs: lo que ocupa en disco el archivo actual*/
+				free(tmp3);
+			}
+
+			else if (arreglo[i] == cuatro) 
+			{	/* Proceso a liberar */
+				char* tmp4 = (char*) malloc(sizeof(char)*100);
+				int j = 0;
+				i++;
+
+				memset(tmp4,0,100);
+
+				while (arreglo[i] != salto)
+				{
+					tmp4[j] = arreglo[i];
+					i++;
+					j++;
+				}
+				lqs = atoi(tmp4);
+				estado_procesos[lqs] = 0; /* Liberamos el proceso */
+				free(tmp4);
+			}
+			i++;
+		}
+
+		else
+		{
+			printf("TIENES PEOS DE PANA\n");
+			i++;
+		}
+	}
+}
+
 void manejoTrabajadores (int posicion, pipe_struct* arreglo_pipes, pipe_struct* pipe_principal){
 	while(1){
 
