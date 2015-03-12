@@ -1,4 +1,5 @@
 
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,32 +15,51 @@ typedef struct{
 
 }argumentos;
 
+typedef struct{
+	int fd[2];
+} pipe_struct;
 
+
+void manejoProcesos(int* id_procesos, int* status_procesos,int posicion){
+	while(1){
+		kill(id_procesos[posicion], SIGSTOP);
+		status_procesos[posicion] = 0;
+	}
+}
 
 
 void resolver(int concurrencia,char* salida,char* directorio){
-	int procesos_libres, procesos_ocupados, i;
-	TIPO_COLA* cola_directorios = crear_cola();
-	ManejoDirectorios(cola_directorios,directorio);
+	int i;
+	// Estructuras necesarias para el manejo de procesos
+	pid_t *trabajadores = (pid_t *) malloc(concurrencia*sizeof(pid_t));
+	int *estado_trabajadores = (int*) malloc(concurrencia*sizeof(int));
+	int *trabajadores_id = (int*) malloc(concurrencia*sizeof(int));
 
-	pid_t *trabajadores = (pid_t *) malloc(concurrencia * sizeof(pid_t));
+
+
 	for (i = 0; i < concurrencia; ++i) {
     	trabajadores[i] = fork();
+
+    	// ERROR en la creación de procesos
       	if (trabajadores[i] < 0) {
         	perror("ERROR EN LA CREACIÓN DE PROCESOS");
-        	exit(1);
+        	exit(EXIT_FAILURE);
       	}
       	if(trabajadores[i] == 0){
-      		printf("ENTRE\n");
-      		exit(0);
-      		// QUE DEBEN HACER
+      		trabajadores_id[i] = getpid();
+      		manejoProcesos(trabajadores_id,estado_trabajadores,i);
+      		break;
       	}
 
-     }
-	procesos_libres = concurrencia;
-	procesos_ocupados = 0;
+    }
+
+    // Estructuras necesarias para el manejo de pipes
+    pipe_struct* pipes_trabajadores = (pipe_struct*) malloc(concurrencia*sizeof(pipe_struct));
+    pipe_struct* pipe_maestro = (pipe_struct*) malloc(sizeof(pipe_struct));
+
 
 }
+
 
 int main(int argc, char *argv[]){
 

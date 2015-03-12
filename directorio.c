@@ -142,7 +142,7 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
             strcat(ruta,"/");
             strcat(ruta,dp->d_name);
             strcat(ruta,"\0");
-            printf("LA RUTA ES %s\n",ruta);
+            //printf("LA RUTA ES %s\n",ruta);
 
             /**
              * Estructura para determinar información de un directorio
