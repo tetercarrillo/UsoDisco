@@ -68,7 +68,7 @@ void resolver(int concurrencia,char* salida,char* directorio){
     	ruta_auxiliar = desencolar(cola_directorios);
     	disponible = (estado_trabajadores,concurrencia);
     	if(disponible){
-    		posicion =proceso_disponible(estado_trabajadores,concurrencia);
+    		posicion = proceso_disponible(estado_trabajadores,concurrencia);
     	}
 
 
@@ -88,7 +88,6 @@ int proceso_disponible(int* arreglo_estados, int num_procesos){
 		}
 	}
 	return -1;
-}
 
 }
 
