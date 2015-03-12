@@ -21,22 +21,6 @@ typedef struct{
 } pipe_struct;
 
 
-void manejoProcesos_suspension(int* id_procesos, int* status_procesos,int posicion){
-	while(1){
-		kill(id_procesos[posicion], SIGSTOP);
-		printf("SE SUSPENDIO AL PROCESO %d\n",id_procesos[posicion]);
-		status_procesos[posicion] = 0;
-	}
-}
-
-void manejoProcesos_activacion(int* id_procesos, int* status_procesos,int posicion){
-	while(1){
-		kill(id_procesos[posicion], SIGCONT);
-		printf("SE ACTIVO EL PROCESO %d\n",id_procesos[posicion]);
-		status_procesos[posicion] = 1;
-	}
-}
-
 // Revisa si hay algun proceso ocupado
 int estado_ocupado (int* arreglo_estados, int num_procesos){
 	int i,disponible;
@@ -92,43 +76,46 @@ void manejoSalida(char* informacion, char* archivo_salida){
 
 }
 
-char* concatenacion(int posicion,char* string){
-	char* cadena;
-	strcat(string,"-");
-	sprintf(cadena,"%d",posicion);
-	strcat(string,cadena);
+void manejoTrabajadores (int posicion, pipe_struct* arreglo_pipes, pipe_struct* pipe_principal){
+	while(1){
 
-	return string;
+		char* leer_informacion_raiz = (char*) malloc(sizeof(char)*100);
+		char* escribir_informacion_raiz = (char*) malloc(sizeof(char)*5000);
+		char* auxiliar = (char*) malloc(sizeof(char)*10);
+		// Se suspende temporalmente el proceso
+		kill(getpid(),SIGSTOP);
+
+		// Manejo de pipes para obtener la ruta del directorio proveniente del padre
+		close(arreglo_pipes[posicion].fd[1]);
+		read(arreglo_pipes[posicion].fd[0],leer_informacion_raiz, (strlen(leer_informacion_raiz)+1));
+
+		// Llamada a la función que maneja los directorios
+		escribir_informacion_raiz = ManejoDirectorios(leer_informacion_raiz);
+		free(leer_informacion_raiz);
+		sprintf(auxiliar,"/4 %d",posicion);
+		strcat(escribir_informacion_raiz,auxiliar);
+		strcat(escribir_informacion_raiz,"\n");
+
+		close(pipe_principal[0].fd[0]);
+		read(pipe_principal[0].fd[1],escribir_informacion_raiz, (strlen(escribir_informacion_raiz)+1));
+		free(escribir_informacion_raiz);
+
+		// SE LE MANDA UNA SEÑAL AL PADRE Y ESA SEÑAL SIGNIFICA QUE DEBE LEER EL PIPE
+
+
+	}
 }
 
 
-void resolver(int concurrencia,char* salida,char* directorio){
-	int i;
+void resolver(int concurrencia,char* salida,char* raiz){
+	int i,ocupado,disponible,proceso_activo,id_trabajador,enlaces_logicos;
+	char* escritura_maestro = (char*) malloc(sizeof(char)*100);
+	char *lectura_maestro = (char*) malloc(sizeof(char)*5000);
 	// Estructuras necesarias para el manejo de procesos
 	pid_t *trabajadores = (pid_t *) malloc(concurrencia*sizeof(pid_t));
 	int *estado_trabajadores = (int*) malloc(concurrencia*sizeof(int));
-	int *trabajadores_id = (int*) malloc(concurrencia*sizeof(int));
 
-
-	for (i = 0; i < concurrencia; ++i) {
-    	trabajadores[i] = fork();
-
-    	// ERROR en la creación de procesos
-      	if (trabajadores[i] < 0) {
-        	perror("ERROR EN LA CREACIÓN DE PROCESOS");
-        	exit(EXIT_FAILURE);
-      	}
-      	if(trabajadores[i] == 0){
-      		trabajadores_id[i] = getpid();
-      		printf("entre\n");
-      		manejoProcesos_suspension(trabajadores_id,estado_trabajadores,i);
-      		break;
-      	}
-
-
-    }
-
-    // Estructuras necesarias para el manejo de pipes
+	// Estructuras necesarias para el manejo de pipes
     pipe_struct* pipes_trabajadores = (pipe_struct*) malloc(concurrencia*sizeof(pipe_struct));
     pipe_struct* pipe_maestro = (pipe_struct*) malloc(sizeof(pipe_struct));
 
@@ -142,92 +129,63 @@ void resolver(int concurrencia,char* salida,char* directorio){
     pipe(pipe_maestro[0].fd);
 
 
-    // Se encolan los directorios de la carpeta raiz pasada por terminal o por default se toma la actual
-    TIPO_COLA* cola_directorios = crear_cola();
-    char* contenido_raiz;
-    ManejoDirectorios(cola_directorios,directorio,contenido_raiz);
-    int ocupado = estado_ocupado(estado_trabajadores,concurrencia);
-    int disponible, j,tamano_string;
-    char* ruta_auxiliar;
-    char* respuesta;
-    char* auxiliar;
-    char* informacion_archivos;
-    char* informacion_proceso;
-    char* informacion_enlace;
-    int cont_enlaces = 0;
-    while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
-			disponible = estado_disponible(estado_trabajadores,concurrencia);
-			ocupado = estado_ocupado(estado_trabajadores,concurrencia);
+	for (i = 0; i < concurrencia; ++i) {
+    	trabajadores[i] = fork();
 
-			if(!cola_vacia(cola_directorios)){
-				ruta_auxiliar = desencolar(cola_directorios);
+    	// ERROR en la creación de procesos
+      	if (trabajadores[i] < 0) {
+        	perror("ERROR EN LA CREACIÓN DE PROCESOS");
+        	exit(EXIT_FAILURE);
+      	}
+      	if(trabajadores[i] == 0){
+      		manejoTrabajadores(i,pipes_trabajadores,pipe_maestro);
+      	}
 
-
-				if(disponible){
-					char* escritura;
-					int aux_enlaces;
-					j = proceso_disponible(estado_trabajadores,concurrencia);
-					// Escritura del pipe
-					close(pipes_trabajadores[j].fd[0]);
-					write(pipes_trabajadores[j].fd[1], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
-
-
-					manejoProcesos_activacion(trabajadores_id,estado_trabajadores,j);
-					printf("HOLA\n");
-					// Lectura del pipe
-					close(pipes_trabajadores[j].fd[1]);
-					read(pipes_trabajadores[j].fd[0], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
-
-
-					ManejoDirectorios(cola_directorios,ruta_auxiliar,respuesta);
-
-					// tamano_string = strlen(respuesta);
-					// escritura = (char*) malloc(sizeof(char)*tamano_string);
-					// escritura = concatenacion(j,respuesta);
-
-					// Division de la informacion pasada por el directorio
-					auxiliar = strtok(respuesta,"#");
-					informacion_archivos=auxiliar;
-					while(auxiliar != NULL){
-						auxiliar = strtok(NULL,"#");
-						informacion_enlace = auxiliar;
-						aux_enlaces = atoi(informacion_enlace);
-					}
-					cont_enlaces = cont_enlaces + aux_enlaces;
-
-					close(pipe_maestro[0].fd[0]);
-			    	write(pipe_maestro[0].fd[1],informacion_archivos, (strlen(informacion_archivos)+1));
-
-					manejoProcesos_suspension(trabajadores_id,estado_trabajadores,j);
-
-					// Lectura
-					close(pipe_maestro[0].fd[1]);
-			    	read(pipe_maestro[0].fd[0],informacion_archivos, (strlen(informacion_archivos)+1));
-
-			    	manejoSalida(informacion_archivos,salida);
-			    	free(respuesta);
-
-
-
-	    		}
-
-
-
-	    		else{
-	    			break;
-	    		}
-	    	// Escritura
-
-
-
-    		}
-    		else{
-    			break;
-    		}
 
     }
 
+    // Todos los procesos en un comienzo estan libres
+    for(i = 0; i<concurrencia; i++){
+    	estado_trabajadores[i] = 0;
+    }
 
+    // Se crea la cola donde se almacenarán todos los directorios
+    TIPO_COLA* cola_directorios = crear_cola();
+    // Se encola el directorio actual
+    encolar(raiz,cola_directorios);
+
+    ocupado = estado_ocupado(estado_trabajadores,concurrencia);
+
+    while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
+
+    	disponible = estado_disponible(estado_trabajadores,concurrencia);
+    	while(disponible && !(cola_vacia(cola_directorios))){
+    		// Inicializacion de todas las variables para poder llevar a cabo el manejo de directorios
+    		proceso_activo = proceso_disponible(estado_trabajadores,concurrencia);
+    		trabajadores[proceso_activo]=getpid();
+    		escritura_maestro = desencolar(cola_directorios);
+
+    		// Se escribe en el pipe la ruta del directorio a manejar
+    		close(pipes_trabajadores[proceso_activo].fd[0]);
+			read(pipes_trabajadores[proceso_activo].fd[1],escritura_maestro, (strlen(escritura_maestro)+1));
+			// Se manda una señal al proceso para que lea el pipe
+    		kill (trabajadores[proceso_activo], SIGCONT);
+    		// Se indica que el proceso está trabajando
+    		estado_trabajadores[proceso_activo] = 1;
+
+    	}
+
+		close(pipe_maestro[1].fd[1]);
+		read(pipe_maestro[0].fd[0],lectura_maestro, (strlen(lectura_maestro)+1));
+
+			/*** PROCEDIMIENTO QUE SE ENCARGA DE SEPARAR LA INFORMACION DEL PIPE ***/
+
+			// HAY QUE ACTIVAR EL PROCESO QUE ME PASO LA INFORMACION, ES DECIR VOLVER A PONER QUE ESTA DISPONIBLE
+			// ENCOLAR SUS DIRECTORIO
+			// ESCRIBIR EN EL ARCHIVO DE SALIDA SUS BLOQUES
+			// SUMAR LA CANTIDAD DE ENLACES LOGICOS
+		ocupado = estado_ocupado(estado_trabajadores,concurrencia);
+    }
 
 
 }

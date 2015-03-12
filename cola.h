@@ -31,7 +31,7 @@ TIPO_COLA* crear_cola();
 * @param *a nodo del arbol a encolar
 * @param *c cola a encolar elemento
 */
-void encolar (char* elemento, TIPO_COLA *c);
+void encolar (char* elemento, TIPO_COLA* c);
 
 int cola_vacia(TIPO_COLA *c);
 
