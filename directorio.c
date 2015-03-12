@@ -21,15 +21,18 @@
 
 
 
-void ManejoDirectorios(TIPO_COLA* c, char* raiz){
+void ManejoDirectorios(TIPO_COLA* c, char* raiz, char* lectura){
     // Variable para abrir el directorio
     DIR* dir;
     // Variable para leer el directorio
     struct dirent* dp;
-    int tamano_raiz,tamano_archivo, tamano_total;
-    char* nombre_archivo;
+    int tamano_raiz, tamano_archivo, tamano_total;
+    char* cadena = (char*) malloc(sizeof(char)*150); //!nuevo
+    char* respuesta = (char*) malloc(sizeof(char)*150);//!nuevo
 
     tamano_raiz = strlen(raiz);
+    struct stat statbuf;
+    int tamano_bloques, enlaces,i,string;
 
     // Se abre el directorio y se hace la verificación pertinente
     dir = opendir(raiz);
@@ -38,11 +41,13 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
         exit(EXIT_FAILURE);
     }
 
-    int i = 0;
     // Lectura del directorio
     while ((dp = readdir(dir)) != NULL){
+
+
         //Verificaciones pertinentes
         if ((strcmp(dp->d_name,".") != 0) && (strcmp(dp->d_name,"..") != 0)){
+            tamano_bloques = 0;
             unsigned char tipo;
             tamano_archivo = strlen(dp->d_name);
             tamano_total = tamano_raiz+tamano_archivo;
@@ -67,10 +72,31 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
             if (tipo == DT_DIR){
                 encolar(ruta,c);
             }
+
             else if (tipo == DT_REG){
+                /* Creamos la concatenacion para mostrar: numero de procesador, ruta y $ */
+                enlaces = statbuf.st_nlink;
+                tamano_bloques = statbuf.st_blocks;
+                sprintf(cadena, "%d", tamano_bloques);
+                strcat(respuesta,cadena);
+                sprintf(cadena, " %s", ruta );
+                strcat(respuesta,cadena);
+                sprintf(cadena, "$");
+                strcat(respuesta,cadena);
             }
         }
     }
+    sprintf(cadena,"#");
+    strcat(respuesta,cadena);
+    sprintf(cadena, "%d", enlaces);
+    strcat(respuesta,cadena);
+    string = strlen(respuesta);
+
+    lectura = (char*) malloc(sizeof(char)*string);
+    lectura = respuesta;
+    free(respuesta);
+    free(cadena);
+
 }
 
 unsigned char obtenerTipo(char* rutaArchivo){

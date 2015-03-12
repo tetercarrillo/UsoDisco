@@ -24,6 +24,7 @@ typedef struct{
 void manejoProcesos_suspension(int* id_procesos, int* status_procesos,int posicion){
 	while(1){
 		kill(id_procesos[posicion], SIGSTOP);
+		printf("SE SUSPENDIO AL PROCESO %d\n",id_procesos[posicion]);
 		status_procesos[posicion] = 0;
 	}
 }
@@ -31,6 +32,7 @@ void manejoProcesos_suspension(int* id_procesos, int* status_procesos,int posici
 void manejoProcesos_activacion(int* id_procesos, int* status_procesos,int posicion){
 	while(1){
 		kill(id_procesos[posicion], SIGCONT);
+		printf("SE ACTIVO EL PROCESO %d\n",id_procesos[posicion]);
 		status_procesos[posicion] = 1;
 	}
 }
@@ -73,6 +75,32 @@ int proceso_disponible(int* arreglo_estados, int num_procesos){
 
 }
 
+void manejoSalida(char* informacion, char* archivo_salida){
+	FILE *fp;
+	char * auxiliar;
+
+	fp = fopen (archivo_salida, "a");
+
+  	auxiliar = strtok (informacion,"$");
+  	fprintf(fp, "%s\n",auxiliar);
+
+  	while (auxiliar != NULL){
+    auxiliar = strtok (NULL, "$");
+    fprintf(fp, "%s\n",auxiliar);
+  }
+  fclose(fp);
+
+}
+
+char* concatenacion(int posicion,char* string){
+	char* cadena;
+	strcat(string,"-");
+	sprintf(cadena,"%d",posicion);
+	strcat(string,cadena);
+
+	return string;
+}
+
 
 void resolver(int concurrencia,char* salida,char* directorio){
 	int i;
@@ -80,7 +108,6 @@ void resolver(int concurrencia,char* salida,char* directorio){
 	pid_t *trabajadores = (pid_t *) malloc(concurrencia*sizeof(pid_t));
 	int *estado_trabajadores = (int*) malloc(concurrencia*sizeof(int));
 	int *trabajadores_id = (int*) malloc(concurrencia*sizeof(int));
-
 
 
 	for (i = 0; i < concurrencia; ++i) {
@@ -93,6 +120,7 @@ void resolver(int concurrencia,char* salida,char* directorio){
       	}
       	if(trabajadores[i] == 0){
       		trabajadores_id[i] = getpid();
+      		printf("entre\n");
       		manejoProcesos_suspension(trabajadores_id,estado_trabajadores,i);
       		break;
       	}
@@ -116,36 +144,91 @@ void resolver(int concurrencia,char* salida,char* directorio){
 
     // Se encolan los directorios de la carpeta raiz pasada por terminal o por default se toma la actual
     TIPO_COLA* cola_directorios = crear_cola();
-    ManejoDirectorios(cola_directorios,directorio);
+    char* contenido_raiz;
+    ManejoDirectorios(cola_directorios,directorio,contenido_raiz);
     int ocupado = estado_ocupado(estado_trabajadores,concurrencia);
-    int disponible, posicion;
+    int disponible, j,tamano_string;
     char* ruta_auxiliar;
+    char* respuesta;
+    char* auxiliar;
+    char* informacion_archivos;
+    char* informacion_proceso;
+    char* informacion_enlace;
+    int cont_enlaces = 0;
     while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
-    	if (cola_vacia(cola_directorios)){
-    		// Hay algo que hacer aqui
-    	}
-    	else{
-			ruta_auxiliar = desencolar(cola_directorios);
-			disponible = (estado_trabajadores,concurrencia);
-			posicion = proceso_disponible(estado_trabajadores,concurrencia);
+			disponible = estado_disponible(estado_trabajadores,concurrencia);
+			ocupado = estado_ocupado(estado_trabajadores,concurrencia);
 
-			// Escritura del pipe
-			close(pipes_trabajadores[posicion].fd[0]);
-			write(pipes_trabajadores[posicion].fd[1], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
+			if(!cola_vacia(cola_directorios)){
+				ruta_auxiliar = desencolar(cola_directorios);
 
 
+				if(disponible){
+					char* escritura;
+					int aux_enlaces;
+					j = proceso_disponible(estado_trabajadores,concurrencia);
+					// Escritura del pipe
+					close(pipes_trabajadores[j].fd[0]);
+					write(pipes_trabajadores[j].fd[1], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
 
-			if(disponible){
-				manejoProcesos_activacion(trabajadores_id,estado_trabajadores,posicion);
-				// Lectura del pipe
-				close(pipes_trabajadores[posicion].fd[1]);
-				read(pipes_trabajadores[posicion].fd[0], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
-				ManejoDirectorios(cola_directorios,ruta_auxiliar);
 
-				// pipes_trabajadores
+					manejoProcesos_activacion(trabajadores_id,estado_trabajadores,j);
+					printf("HOLA\n");
+					// Lectura del pipe
+					close(pipes_trabajadores[j].fd[1]);
+					read(pipes_trabajadores[j].fd[0], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
+
+
+					ManejoDirectorios(cola_directorios,ruta_auxiliar,respuesta);
+
+					// tamano_string = strlen(respuesta);
+					// escritura = (char*) malloc(sizeof(char)*tamano_string);
+					// escritura = concatenacion(j,respuesta);
+
+					// Division de la informacion pasada por el directorio
+					auxiliar = strtok(respuesta,"#");
+					informacion_archivos=auxiliar;
+					while(auxiliar != NULL){
+						auxiliar = strtok(NULL,"#");
+						informacion_enlace = auxiliar;
+						aux_enlaces = atoi(informacion_enlace);
+					}
+					cont_enlaces = cont_enlaces + aux_enlaces;
+
+					close(pipe_maestro[0].fd[0]);
+			    	write(pipe_maestro[0].fd[1],informacion_archivos, (strlen(informacion_archivos)+1));
+
+					manejoProcesos_suspension(trabajadores_id,estado_trabajadores,j);
+
+					// Lectura
+					close(pipe_maestro[0].fd[1]);
+			    	read(pipe_maestro[0].fd[0],informacion_archivos, (strlen(informacion_archivos)+1));
+
+			    	manejoSalida(informacion_archivos,salida);
+			    	free(respuesta);
+
+
+
+	    		}
+
+
+
+	    		else{
+	    			break;
+	    		}
+	    	// Escritura
+
+
+
     		}
-    	}
+    		else{
+    			break;
+    		}
+
     }
+
+
+
 
 }
 

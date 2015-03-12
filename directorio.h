@@ -21,7 +21,7 @@
 
 
 
-void ManejoDirectorios(TIPO_COLA* c, char* raiz);
+void ManejoDirectorios(TIPO_COLA* c, char* raiz, char* lectura);
 
 unsigned char obtenerTipo(char* rutaArchivo);
 
