@@ -21,10 +21,17 @@ typedef struct{
 } pipe_struct;
 
 
-void manejoProcesos(int* id_procesos, int* status_procesos,int posicion){
+void manejoProcesos_suspension(int* id_procesos, int* status_procesos,int posicion){
 	while(1){
 		kill(id_procesos[posicion], SIGSTOP);
 		status_procesos[posicion] = 0;
+	}
+}
+
+void manejoProcesos_activacion(int* id_procesos, int* status_procesos,int posicion){
+	while(1){
+		kill(id_procesos[posicion], SIGCONT);
+		status_procesos[posicion] = 1;
 	}
 }
 
@@ -86,7 +93,7 @@ void resolver(int concurrencia,char* salida,char* directorio){
       	}
       	if(trabajadores[i] == 0){
       		trabajadores_id[i] = getpid();
-      		manejoProcesos(trabajadores_id,estado_trabajadores,i);
+      		manejoProcesos_suspension(trabajadores_id,estado_trabajadores,i);
       		break;
       	}
 
@@ -97,6 +104,16 @@ void resolver(int concurrencia,char* salida,char* directorio){
     pipe_struct* pipes_trabajadores = (pipe_struct*) malloc(concurrencia*sizeof(pipe_struct));
     pipe_struct* pipe_maestro = (pipe_struct*) malloc(sizeof(pipe_struct));
 
+    // Pipes donde el maestro le pasa información a los trabajadores
+    for (i = 0; i < concurrencia; ++i) {
+    	pipe(pipes_trabajadores[i].fd);
+
+    }
+
+    // Pipe donde los trabajadores le pasan información al maestro
+    pipe(pipe_maestro[0].fd);
+
+
     // Se encolan los directorios de la carpeta raiz pasada por terminal o por default se toma la actual
     TIPO_COLA* cola_directorios = crear_cola();
     ManejoDirectorios(cola_directorios,directorio);
@@ -104,11 +121,29 @@ void resolver(int concurrencia,char* salida,char* directorio){
     int disponible, posicion;
     char* ruta_auxiliar;
     while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
+    	if (cola_vacia(cola_directorios)){
+    		// Hay algo que hacer aqui
+    	}
+    	else{
+			ruta_auxiliar = desencolar(cola_directorios);
+			disponible = (estado_trabajadores,concurrencia);
+			posicion = proceso_disponible(estado_trabajadores,concurrencia);
 
-    	ruta_auxiliar = desencolar(cola_directorios);
-    	disponible = (estado_trabajadores,concurrencia);
-    	if(disponible){
-    		posicion = proceso_disponible(estado_trabajadores,concurrencia);
+			// Escritura del pipe
+			close(pipes_trabajadores[posicion].fd[0]);
+			write(pipes_trabajadores[posicion].fd[1], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
+
+
+
+			if(disponible){
+				manejoProcesos_activacion(trabajadores_id,estado_trabajadores,posicion);
+				// Lectura del pipe
+				close(pipes_trabajadores[posicion].fd[1]);
+				read(pipes_trabajadores[posicion].fd[0], ruta_auxiliar, (strlen(ruta_auxiliar)+1));
+				ManejoDirectorios(cola_directorios,ruta_auxiliar);
+
+				// pipes_trabajadores
+    		}
     	}
     }
 

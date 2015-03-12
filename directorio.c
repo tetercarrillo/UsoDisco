@@ -65,7 +65,6 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
             tipo = obtenerTipo(ruta);
 
             if (tipo == DT_DIR){
-                ManejoDirectorios(c,ruta);
                 encolar(ruta,c);
             }
             else if (tipo == DT_REG){
