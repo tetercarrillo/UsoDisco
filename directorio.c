@@ -26,10 +26,15 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
     DIR* dir;
     // Variable para leer el directorio
     struct dirent* dp;
-    int tamano_raiz,tamano_archivo, tamano_total;
+    int tamano_raiz, tamano_archivo, tamano_total, numProc;
     char* nombre_archivo;
+    char* cadena = malloc(100); //!nuevo
+    char* ruta;     //!nuevo
+    char* respuesta;//!nuevo
 
     tamano_raiz = strlen(raiz);
+    struct stat statbuf;
+    int tam;
 
     // Se abre el directorio y se hace la verificación pertinente
     dir = opendir(raiz);
@@ -41,8 +46,11 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
     int i = 0;
     // Lectura del directorio
     while ((dp = readdir(dir)) != NULL){
+
+        
         //Verificaciones pertinentes
         if ((strcmp(dp->d_name,".") != 0) && (strcmp(dp->d_name,"..") != 0)){
+            tam = 0;
             unsigned char tipo;
             tamano_archivo = strlen(dp->d_name);
             tamano_total = tamano_raiz+tamano_archivo;
@@ -69,9 +77,18 @@ void ManejoDirectorios(TIPO_COLA* c, char* raiz){
                 encolar(ruta,c);
             }
             else if (tipo == DT_REG){
+                /* Creamos la concatenacion para mostrar: numero de procesador, ruta y $ */
+                tam = statbuf.st_blocks;
+                sprintf(cadena, "%d", tam); 
+                strcat(respuesta,cadena);
+                sprintf(cadena, " %s", ruta ); 
+                strcat(respuesta,cadena);
+                sprintf(cadena, "$");
+                strcat(respuesta,cadena);
             }
         }
     }
+
 }
 
 unsigned char obtenerTipo(char* rutaArchivo){
