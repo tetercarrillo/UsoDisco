@@ -27,7 +27,7 @@ char* ManejoDirectorios(char* raiz){
     // Variable para leer el directorio
     struct dirent* dp;
 
-
+    // printf("MI RAIZ ES %s\n",raiz);
     int tamano_raiz, tamano_archivo,tamano_total, tamano_informacion,tamano_bloques,nro_enlaces;
     char* respuesta = (char*) malloc(sizeof(char)*5000);//!nuevo
     struct stat statbuf;
@@ -38,13 +38,9 @@ char* ManejoDirectorios(char* raiz){
 
     //int tamano_raiz, tamano_archivo, tamano_total, numProc;
     char* nombre_archivo;
-    char* cadena = malloc(100); //!nuevo
-    char* ruta;     //!nuevo
-    //char* respuesta;//!nuevo
-
+    char* ruta =(char*) malloc(sizeof(char)*5000);    //!nuevo
+    char* cadena = (char*) malloc(sizeof(char)*5000);
     tamano_raiz = strlen(raiz);
-    //struct stat statbuf;
-    int tam;
 
 
     // Se abre el directorio y se hace la verificación pertinente
@@ -58,14 +54,12 @@ char* ManejoDirectorios(char* raiz){
     // Lectura del directorio raiz pasado como parámetro
     while ((dp = readdir(dir)) != NULL){
 
-        
         //Verificaciones pertinentes
         if ((strcmp(dp->d_name,".") != 0) && (strcmp(dp->d_name,"..") != 0)){
 
             // Se calcula el tamano del string de la ruta
             char* cadena = (char*) malloc(sizeof(char)*150);
 
-            tam = 0;
             unsigned char tipo;
 
             tamano_archivo = strlen(dp->d_name);
@@ -95,7 +89,7 @@ char* ManejoDirectorios(char* raiz){
             else if (tipo == DT_REG){
                 /* Creamos la concatenacion para mostrar: numero de procesador, ruta y $ */
 
-                nro_enlaces = statbuf.st_nlink;
+                tamano_bloques = statbuf.st_blocks;
                 sprintf(cadena,"/2 %d %s\n",tamano_bloques,ruta);
                 strcat(respuesta,cadena);
                 free(cadena);
@@ -104,14 +98,6 @@ char* ManejoDirectorios(char* raiz){
             // Caso ENLACE LÓGICO
             else if (tipo == DT_LNK){
                 nro_enlaces = nro_enlaces + 1;
-
-                tam = statbuf.st_blocks;
-                sprintf(cadena, "%d", tam); 
-                strcat(respuesta,cadena);
-                sprintf(cadena, " %s", ruta ); 
-                strcat(respuesta,cadena);
-                sprintf(cadena, "$");
-                strcat(respuesta,cadena);
 
             }
         }
@@ -125,7 +111,8 @@ char* ManejoDirectorios(char* raiz){
     free(cadena);
     tamano_informacion = strlen(respuesta);
     informacion_directorio = (char*) malloc(sizeof(char)*tamano_informacion);
-
+    informacion_directorio = respuesta;
+    close(dir);
     // Se devuelve el string con toda la información pertinente al directorio
     return informacion_directorio;
 

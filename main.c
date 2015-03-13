@@ -61,23 +61,14 @@ int proceso_disponible(int* arreglo_estados, int num_procesos){
 
 void manejoSalida(char* informacion, char* archivo_salida){
 	FILE *fp;
-	char * auxiliar;
 
 	fp = fopen (archivo_salida, "a");
-
-  	auxiliar = strtok (informacion,"$");
-  	fprintf(fp, "%s\n",auxiliar);
-
-  	while (auxiliar != NULL){
-    auxiliar = strtok (NULL, "$");
-    fprintf(fp, "%s\n",auxiliar);
-  }
-  fclose(fp);
+  	fprintf(fp, "%s\n",informacion);
+  	fclose(fp);
 
 }
 
-void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estado_procesos)
-{
+void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estado_procesos){
 	int lqs = 0, i=0;
 	char* aux;
 	int tamanio = 27;
@@ -92,60 +83,50 @@ void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estad
 	char* tmp1,tmp2,tmp,tmp4;
 
 	while (arreglo[i] != nulo) {
-		
-		if (arreglo[i] == slash)
-		{
+
+		if (arreglo[i] == slash){
 			i = i+1;
-			if (arreglo[i] == uno)
-			{ /* directorio */
+			if (arreglo[i] == uno){ /* directorio */
 				char* tmp1 = (char*) malloc(sizeof(char)*100);
 				int j = 0;
 				i = i+2;
 
 				memset(tmp1,0,100);
-				printf("entre a al primer caso\n");
 
-				while (arreglo[i] != salto)
-				{
+				while (arreglo[i] != salto){
 					tmp1[j] = arreglo[i];
 					i++;
 					j++;
 				}
 
 				encolar(tmp1, c);
-				printf("%s\n",tmp1);
 				free(tmp1);
 			}
 
-			else if (arreglo[i] == dos)
-			{ /* regular */
+			else if (arreglo[i] == dos){ /* regular */
 				char* tmp2 = (char*) malloc(sizeof(char)*100);
 				int j = 0;
 				i=i+2;
 
 				memset(tmp2,0,100);
 
-				while (arreglo[i] != salto)
-				{
+				while (arreglo[i] != salto){
 					tmp2[j] = arreglo[i];
 					i++;
 					j++;
 				}
 				manejoSalida(tmp2, salida);
-				printf("%s\n",tmp2);
 				free(tmp2);
 			}
 
-			else if (arreglo[i] == tres) 
-			{	/* enlaces logicos */
+			else if (arreglo[i] == tres){	/* enlaces logicos */
 				char* tmp3 = (char*) malloc(sizeof(char)*100);
 				int j = 0;
 				i=i+2;
 
 				memset(tmp3,0,100);
 
-				while (arreglo[i] != salto)
-				{	
+				while (arreglo[i] != salto){
 					tmp3[j] = arreglo[i];
 					i++;
 					j++;
@@ -155,16 +136,14 @@ void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estad
 				free(tmp3);
 			}
 
-			else if (arreglo[i] == cuatro) 
-			{	/* Proceso a liberar */
+			else if (arreglo[i] == cuatro){	/* Proceso a liberar */
 				char* tmp4 = (char*) malloc(sizeof(char)*100);
 				int j = 0;
 				i++;
 
 				memset(tmp4,0,100);
 
-				while (arreglo[i] != salto)
-				{
+				while (arreglo[i] != salto){
 					tmp4[j] = arreglo[i];
 					i++;
 					j++;
@@ -176,53 +155,25 @@ void manejoHijo(char* arreglo,TIPO_COLA* c, char* salida, int enlaces,int* estad
 			i++;
 		}
 
-		else
-		{
-			printf("TIENES PEOS DE PANA\n");
+		else{
 			i++;
 		}
 	}
 }
 
-void manejoTrabajadores (int posicion, pipe_struct* arreglo_pipes, pipe_struct* pipe_principal){
-	while(1){
-
-		char* leer_informacion_raiz = (char*) malloc(sizeof(char)*100);
-		char* escribir_informacion_raiz = (char*) malloc(sizeof(char)*5000);
-		char* auxiliar = (char*) malloc(sizeof(char)*10);
-		// Se suspende temporalmente el proceso
-		kill(getpid(),SIGSTOP);
-
-		// Manejo de pipes para obtener la ruta del directorio proveniente del padre
-		close(arreglo_pipes[posicion].fd[1]);
-		read(arreglo_pipes[posicion].fd[0],leer_informacion_raiz, (strlen(leer_informacion_raiz)+1));
-
-		// Llamada a la función que maneja los directorios
-		escribir_informacion_raiz = ManejoDirectorios(leer_informacion_raiz);
-		free(leer_informacion_raiz);
-		sprintf(auxiliar,"/4 %d",posicion);
-		strcat(escribir_informacion_raiz,auxiliar);
-		strcat(escribir_informacion_raiz,"\n");
-
-		close(pipe_principal[0].fd[0]);
-		read(pipe_principal[0].fd[1],escribir_informacion_raiz, (strlen(escribir_informacion_raiz)+1));
-		free(escribir_informacion_raiz);
-
-		// SE LE MANDA UNA SEÑAL AL PADRE Y ESA SEÑAL SIGNIFICA QUE DEBE LEER EL PIPE
-
-
-	}
-}
 
 
 void resolver(int concurrencia,char* salida,char* raiz){
-	int i,ocupado,disponible,proceso_activo,id_trabajador,enlaces_logicos;
+	int i,ocupado,disponible,proceso_activo,enlaces_logicos;
 	char* escritura_maestro = (char*) malloc(sizeof(char)*100);
 	char *lectura_maestro = (char*) malloc(sizeof(char)*5000);
+	char* archivo_salida = (char*) malloc(sizeof(char)*100);
+	archivo_salida = salida;
+	char* auxiliar = (char*) malloc(sizeof(char)*100);
 	// Estructuras necesarias para el manejo de procesos
 	pid_t *trabajadores = (pid_t *) malloc(concurrencia*sizeof(pid_t));
 	int *estado_trabajadores = (int*) malloc(concurrencia*sizeof(int));
-
+	int *id_trabajador = (int*) malloc(concurrencia*sizeof(int));
 	// Estructuras necesarias para el manejo de pipes
     pipe_struct* pipes_trabajadores = (pipe_struct*) malloc(concurrencia*sizeof(pipe_struct));
     pipe_struct* pipe_maestro = (pipe_struct*) malloc(sizeof(pipe_struct));
@@ -235,6 +186,7 @@ void resolver(int concurrencia,char* salida,char* raiz){
 
     // Pipe donde los trabajadores le pasan información al maestro
     pipe(pipe_maestro[0].fd);
+    char aux1 [1000];
 
 
 	for (i = 0; i < concurrencia; ++i) {
@@ -246,11 +198,41 @@ void resolver(int concurrencia,char* salida,char* raiz){
         	exit(EXIT_FAILURE);
       	}
       	if(trabajadores[i] == 0){
-      		manejoTrabajadores(i,pipes_trabajadores,pipe_maestro);
+      		while(1){
+				char* leer_informacion_raiz = (char*) malloc(sizeof(char)*100);
+				char* escribir_informacion_raiz = (char*) malloc(sizeof(char)*5000);
+				char* auxiliar = (char*) malloc(sizeof(char)*10);
+				// Se suspende temporalmente el proceso
+				//kill(getpid(),SIGSTOP);
+				// memset(leer_informacion_raiz,0,100);
+				// Manejo de pipes para obtener la ruta del directorio proveniente del padre
+				close(pipe_maestro[0].fd[0]);
+				close(pipes_trabajadores[i].fd[1]);
+				memset(leer_informacion_raiz,0,10000);
+				read(pipes_trabajadores[i].fd[0],leer_informacion_raiz, 10000);
+				// printf("EL Directorio a leer es %s\n",leer_informacion_raiz);
+				// Llamada a la función que maneja los directorios
+				memset(escribir_informacion_raiz,0,10000);
+				escribir_informacion_raiz = ManejoDirectorios(leer_informacion_raiz);
+				memset(leer_informacion_raiz,0,10000);
+				sprintf(auxiliar,"/4 %d",i);
+				strcat(escribir_informacion_raiz,auxiliar);
+				strcat(escribir_informacion_raiz,"\n");
+
+				printf("LA INFORMACION RECIBIDA DE LA RAIZ %s\n%s",leer_informacion_raiz,escribir_informacion_raiz);
+
+				write(pipe_maestro[0].fd[1],escribir_informacion_raiz, 100000);
+				free(escribir_informacion_raiz);
+				memset(escribir_informacion_raiz,0,100000);
+
+		// SE LE MANDA UNA SEÑAL AL PADRE Y ESA SEÑAL SIGNIFICA QUE DEBE LEER EL PIPE
+
+
+			}
       	}
 
-
     }
+
 
     // Todos los procesos en un comienzo estan libres
     for(i = 0; i<concurrencia; i++){
@@ -261,39 +243,38 @@ void resolver(int concurrencia,char* salida,char* raiz){
     TIPO_COLA* cola_directorios = crear_cola();
     // Se encola el directorio actual
     encolar(raiz,cola_directorios);
-
     ocupado = estado_ocupado(estado_trabajadores,concurrencia);
 
     while ((!(cola_vacia(cola_directorios))) || ((cola_vacia(cola_directorios)) && (ocupado))){
-
     	disponible = estado_disponible(estado_trabajadores,concurrencia);
     	while(disponible && !(cola_vacia(cola_directorios))){
     		// Inicializacion de todas las variables para poder llevar a cabo el manejo de directorios
     		proceso_activo = proceso_disponible(estado_trabajadores,concurrencia);
-    		trabajadores[proceso_activo]=getpid();
-    		escritura_maestro = desencolar(cola_directorios);
+    		//printf("POSICION DEL PROCESO ACTIVO %d Y ID DEL PROCESO %d\n",proceso_activo, id_trabajador[proceso_activo]);
 
+
+    		escritura_maestro = desencolar(cola_directorios);
     		// Se escribe en el pipe la ruta del directorio a manejar
     		close(pipes_trabajadores[proceso_activo].fd[0]);
-			read(pipes_trabajadores[proceso_activo].fd[1],escritura_maestro, (strlen(escritura_maestro)+1));
+    		// memset(escritura_maestro,0,1000);
+			write(pipes_trabajadores[proceso_activo].fd[1],escritura_maestro, 10000);
+			// printf("EL DIRECTORIO ES %s\n",escritura_maestro);
 			// Se manda una señal al proceso para que lea el pipe
-    		kill (trabajadores[proceso_activo], SIGCONT);
+    		//kill (trabajadores[proceso_activo], SIGCONT);
     		// Se indica que el proceso está trabajando
     		estado_trabajadores[proceso_activo] = 1;
 
+
     	}
-
 		close(pipe_maestro[1].fd[1]);
-		read(pipe_maestro[0].fd[0],lectura_maestro, (strlen(lectura_maestro)+1));
-
-			/*** PROCEDIMIENTO QUE SE ENCARGA DE SEPARAR LA INFORMACION DEL PIPE ***/
-
-			// HAY QUE ACTIVAR EL PROCESO QUE ME PASO LA INFORMACION, ES DECIR VOLVER A PONER QUE ESTA DISPONIBLE
-			// ENCOLAR SUS DIRECTORIO
-			// ESCRIBIR EN EL ARCHIVO DE SALIDA SUS BLOQUES
-			// SUMAR LA CANTIDAD DE ENLACES LOGICOS
+		read(pipe_maestro[0].fd[0],lectura_maestro, 100000);
+		manejoHijo(lectura_maestro,cola_directorios, archivo_salida, enlaces_logicos,estado_trabajadores);
+		free(lectura_maestro);
+		memset(lectura_maestro,0,10000);
 		ocupado = estado_ocupado(estado_trabajadores,concurrencia);
     }
+    sprintf(auxiliar,"La cantidad de enlaces logicos es: %d",enlaces_logicos);
+    manejoSalida(auxiliar,archivo_salida);
 
 
 }
@@ -466,6 +447,7 @@ int main(int argc, char *argv[]){
      	args.salida = (char*)malloc(sizeof(argv[1]));
     	strcpy(args.salida,argv[1]);
     }
+
 
     resolver(args.numProcesos,args.salida,args.directorio);
 }
